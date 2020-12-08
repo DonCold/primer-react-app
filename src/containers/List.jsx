@@ -2,15 +2,19 @@ import React, { Fragment } from "react";
 
 import Card from "./../components/Card/Card";
 
-const API = "http://www.omdbapi.com/?i=tt3896198&apikey=d2d46260";
+console.log(process.env.REACT_APP_API);
+
+const API = process.env.REACT_APP_API;
 
 class List extends React.Component {
     constructor() {
         super();
+
         this.state = {
             data: [],
             serchTerm: "kimetsu",
-            error : ""
+            error : "",
+            loading: true,
         };
     }
 
@@ -18,26 +22,37 @@ class List extends React.Component {
         const res = await fetch(`${API}&s=${this.state.serchTerm}`);
         const dataJSON = await res.json();
 
-        this.setState({ data: dataJSON.Search });
+        this.setState({ data: dataJSON.Search, loading: false});
     }
 
     async handleSubmit(e) {
         e.preventDefault();
+        this.setState({ loading: true });
 
         if(!this.state.serchTerm) {
+            this.setState({ loading: false });
             return this.setState({ error: "Por Favor Ingrese Algo" });
         }
 
         const res = await fetch(`${API}&s=${this.state.serchTerm}`);
         const dataJSON = await res.json();
+
         if(!dataJSON.Search){
+            this.setState({ loading: false });
             return this.setState({ error: "No Hemos Encontrado Datos Relacionados" });
         }
+
         this.setState({ error: "", serchTerm: "" });
-        this.setState({ data: dataJSON.Search });
+        this.setState({ data: dataJSON.Search, loading: false});
     }
 
     render() {
+        const { data, loading } = this.state;
+
+        if(loading) {
+            return <h3 className="text-light">Cargando...</h3>
+        }
+
         return (
             <Fragment>
                 <div className="row">
@@ -55,9 +70,11 @@ class List extends React.Component {
                     </div>
                 </div>
                 <div className="row">
-                    {this.state.data.map((movie) => {
-                        return <Card key={movie.imdbID} movie={movie} />;
-                    })}
+                    {
+                        data.map((movie) => {
+                            return <Card key={movie.imdbID} movie={movie} />;
+                        })
+                    }
                 </div>
             </Fragment>
         );
